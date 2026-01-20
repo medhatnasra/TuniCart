@@ -3,6 +3,7 @@ import React, { useState } from "react";
 const UserManagement = () => {
   const users = [
     {
+      _id: 1234,
       name: "Medhat Nasra",
       email: "user1@gmail.com",
       role: "Admin",
@@ -20,6 +21,22 @@ const UserManagement = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      role: "customer",
+    });
+  };
+
+  const handleRoleChange = (userId, newRole) => {
+    console.log({ id: userId, role: newRole });
+  };
+
+  const handleDeleteUser = (userId) => {
+    if (window.confirm("Are you sure you want to delete this user ? ")) {
+      console.log("Deleting user with ID", userId);
+    }
   };
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -80,6 +97,42 @@ const UserManagement = () => {
             Add User
           </button>
         </form>
+      </div>
+      {/* Users List Management  */}
+      <div className="overflow-x-auto shadow-md sm:rounded-lg">
+        <table className="min-w-full text-left text-gray-500">
+          <thead className="bg-gray-100 text-xs uppercase text-gray-700">
+            <tr>
+              <th className="yp-3 px-4"> Name</th>
+              <th className="yp-3 px-4">Email</th>
+              <th className="yp-3 px-4"> Role</th>
+              <th className="yp-3 px-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user._id} className="border-b hover:bg-gray-50 ">
+                <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
+                  {user.name}
+                </td>
+                <td className="p-4">{user.email}</td>
+                <td className="p-4">
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                    className="p-2 border rounded"
+                  >
+                    <option value="Customer">Customer</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </td>
+                <td className="p-4">
+                  <button onClick={() => handleDeleteUser(user._id)}></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
