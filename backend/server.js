@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const app = express();
 const UserRoutes = require("./routes/userRoutes");
 const ProductRoutes = require("./routes/productRoutes");
+const CartRoutes = require("./routes/cartRoutes");
 
 app.use(express.json());
 
@@ -24,6 +25,7 @@ app.listen(process.env.PORT, () => {
 
 app.use("/api/users", UserRoutes);
 app.use("/api/products", ProductRoutes);
+app.use("/api/cart", CartRoutes);
 
 mongoose
   .connect(process.env.MONGO_URL)
