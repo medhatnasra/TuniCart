@@ -1,30 +1,36 @@
 import React from "react";
 import { RiDeleteBin3Line } from "react-icons/ri";
+import { useDispatch } from "react-redux";
+import {
+  removeFromCart,
+  updateCartItemQuantity,
+} from "../../redux/slices/cartSlice";
 
-const CartContents = () => {
-  const cartcontent = [
-    {
-      productId: 1,
-      name: "T-shirt",
-      size: "M",
-      color: "Red",
-      quantity: 1,
-      price: 15,
-      image: "https://picsum.photos/200?random=1",
-    },
-    {
-      productId: 2,
-      name: "Jeans",
-      size: "M",
-      color: "Blue",
-      quantity: 1,
-      price: 15,
-      image: "https://picsum.photos/200?random=2",
-    },
-  ];
+const CartContents = ({ cart, userId, guestId }) => {
+  const dispatch = useDispatch();
+
+  const handleAddtoCart = (productId, delta, quantity, size, color) => {
+    const newQuantity = quantity + delta;
+    if (newQuantity >= 1) {
+      dispatch(
+        updateCartItemQuantity({
+          productId,
+          quantity: newQuantity,
+          guestId,
+          userId,
+          size,
+          color,
+        })
+      );
+    }
+  };
+
+  const handleRemoveFromCart = (productId, size, color) => {
+    dispatch(removeFromCart({ productId, guestId, userId, size, color }));
+  };
   return (
     <div>
-      {cartcontent.map((product, index) => {
+      {cart.products.map((product, index) => {
         return (
           <div>
             <div
@@ -32,11 +38,17 @@ const CartContents = () => {
               className="flex items-start justify-between py-4 border-b"
             >
               <div className="flex items-start">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-20 h-24 object-cover mr-4 rounded "
-                />
+                {product.image?.url || product.images?.[0]?.url ? (
+                  <img
+                    src={product.image?.url || product.images?.[0]?.url}
+                    alt={product.name}
+                    className="w-20 h-24 object-cover mr-4 rounded "
+                  />
+                ) : (
+                  <div className="w-20 h-24 bg-gray-200 mr-4 rounded flex items-center justify-center">
+                    <span className="text-xs text-gray-400">No image</span>
+                  </div>
+                )}
               </div>
               <div className="">
                 <h3>{product.name}</h3>
@@ -44,17 +56,47 @@ const CartContents = () => {
                   size : {product.size} | color : {product.color}
                 </p>
                 <div className="flex items-center mt-2">
-                  <button className="border rounded px-2 py-1 text-xl font-medium">
+                  <button
+                    onClick={() =>
+                      handleAddtoCart(
+                        product.productId,
+                        -1,
+                        product.quantity,
+                        product.size,
+                        product.color
+                      )
+                    }
+                    className="border rounded px-2 py-1 text-xl font-medium"
+                  >
                     -
                   </button>
                   <span className="mx-4">{product.quantity}</span>
-                  <button className="border rounded px-2 py-1 text-xl font-medium">
+                  <button
+                    onClick={() =>
+                      handleAddtoCart(
+                        product.productId,
+                        1,
+                        product.quantity,
+                        product.size,
+                        product.color
+                      )
+                    }
+                    className="border rounded px-2 py-1 text-xl font-medium"
+                  >
                     +
                   </button>
                 </div>
               </div>
               <p>$ {product.price.toLocaleString()}</p>
-              <button>
+              <button
+                onClick={() =>
+                  handleRemoveFromCart(
+                    product.productId,
+                    product.size,
+                    product.color
+                  )
+                }
+              >
                 <RiDeleteBin3Line className="h-6 w-6 mt-2 text-red-600" />
               </button>
             </div>

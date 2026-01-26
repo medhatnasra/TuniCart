@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { addUser, deleteUser, updateUser } from "../../redux/slices/adminSlice";
 
 const UserManagement = () => {
-  const users = [
-    {
-      _id: 1234,
-      name: "Medhat Nasra",
-      email: "user1@gmail.com",
-      role: "Admin",
-    },
-  ];
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+
+  const { users, loading, error } = useSelector((state) => state.admin);
+
+  useEffect(() => {
+    if (user && user.role !== "admin") {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,11 +23,13 @@ const UserManagement = () => {
     role: "customer",
   });
   const handleChange = (e) => {
-    setFormData({ ...FormData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    dispatch(addUser(formData));
+
     setFormData({
       name: "",
       email: "",
@@ -30,17 +39,20 @@ const UserManagement = () => {
   };
 
   const handleRoleChange = (userId, newRole) => {
-    console.log({ id: userId, role: newRole });
+    dispatch(updateUser({ id: userId, role: newRole }));
   };
 
   const handleDeleteUser = (userId) => {
     if (window.confirm("Are you sure you want to delete this user ? ")) {
-      console.log("Deleting user with ID", userId);
+      dispatch(deleteUser(userId));
     }
   };
   return (
     <div className="max-w-7xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-4 ">User Management</h2>
+      {loading && <p> Loading ....</p>}
+      {error && <p> Error : {error} ...</p>}
+
       {/* Add New User Form */}
       <div className="p-6 rounded-lg mb-6">
         <h3 className="text-lg font-bold mb-4">Add New User</h3>
@@ -110,27 +122,37 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user._id} className="border-b hover:bg-gray-50 ">
-                <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
-                  {user.name}
-                </td>
-                <td className="p-4">{user.email}</td>
-                <td className="p-4">
-                  <select
-                    value={user.role}
-                    onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                    className="p-2 border rounded"
-                  >
-                    <option value="Customer">Customer</option>
-                    <option value="Admin">Admin</option>
-                  </select>
-                </td>
-                <td className="p-4">
-                  <button onClick={() => handleDeleteUser(user._id)}></button>
+            {Array.isArray(users) && users.length > 0 ? (
+              users.map((user) => (
+                <tr key={user._id} className="border-b hover:bg-gray-50 ">
+                  <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
+                    {user.name}
+                  </td>
+                  <td className="p-4">{user.email}</td>
+                  <td className="p-4">
+                    <select
+                      value={user.role}
+                      onChange={(e) =>
+                        handleRoleChange(user._id, e.target.value)
+                      }
+                      className="p-2 border rounded"
+                    >
+                      <option value="Customer">Customer</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </td>
+                  <td className="p-4">
+                    <button onClick={() => handleDeleteUser(user._id)}></button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="p-4 text-center text-gray-400">
+                  No users found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

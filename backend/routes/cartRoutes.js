@@ -36,7 +36,7 @@ router.post("/", async (req, res) => {
     if (cart) {
       const productIndex = cart.products.findIndex(
         (p) =>
-          p.productId.toString === productId &&
+          p.productId.toString() === productId &&
           p.size === size &&
           p.color === color
       );
@@ -47,7 +47,7 @@ router.post("/", async (req, res) => {
         cart.products.push({
           productId,
           name: product.name,
-          image: product.image,
+          image: product.images?.[0]?.url || "",
           price: product.price,
           size,
           color,
@@ -71,7 +71,7 @@ router.post("/", async (req, res) => {
           {
             productId,
             name: product.name,
-            image: product.image,
+            image: product.images?.[0]?.url || "",
             price: product.price,
             size,
             color,

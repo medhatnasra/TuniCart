@@ -1,35 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { clearCart } from "../redux/slices/cartSlice";
 
 const OrderConfirmationPage = () => {
-  const checkout = {
-    _id: 1234,
-    createdAt: new Date(),
-    checkoutItems: [
-      {
-        productId: 1,
-        name: "Jacket",
-        color: "black",
-        size: "M",
-        price: 150,
-        quantity: 1,
-        image: "https://picsum.photos/500/500?random=1",
-      },
-      {
-        productId: 2,
-        name: "Jacket",
-        color: "black",
-        size: "M",
-        price: 150,
-        quantity: 1,
-        image: "https://picsum.photos/500/500?random=1",
-      },
-    ],
-    shippingAddress: {
-      address: "1234 Fashion Street",
-      city: "New York",
-      country: "USA",
-    },
-  };
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { checkout } = useSelector((state) => state.checkout);
+
+  useEffect(() => {
+    if (checkout && checkout._id) {
+      dispatch(clearCart());
+      localStorage.removeItem("cart");
+    } else {
+      navigate("/my-orders");
+    }
+  }, [checkout, dispatch, navigate]);
+
   const calculateEstimatedDelivery = (createdAt) => {
     const orderDate = new Date(createdAt);
     orderDate.setDate(orderDate.getDate() + 3);
@@ -62,7 +49,7 @@ const OrderConfirmationPage = () => {
           </div>
           {/* Ordered Items  */}
           <div className="mb-200">
-            {checkout.checkoutItems.map((item) => {
+            {checkout.checkoutItems.map((item) => (
               <div className="flex item-center mb-4 " key={item.productId}>
                 <img
                   src={item.image}
@@ -79,8 +66,8 @@ const OrderConfirmationPage = () => {
                   <p className="text-md ">${item.price}</p>
                   <p className="text-sm text-gray-500"> {item.quantity}</p>
                 </div>
-              </div>;
-            })}
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-2 gap-8">
             {/* Payment Info  */}

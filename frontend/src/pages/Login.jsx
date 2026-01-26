@@ -1,12 +1,38 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import login from "../assets/login.webp";
+
+import { loginUser } from "../redux/slices/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { mergeCart } from "../redux/slices/cartSlice";
+
 const Login = () => {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, guestId } = useSelector((state) => state.auth);
+  const { cart } = useSelector((state) => state.cart);
+
+  const redirect = new URLSearchParams(location.search).get("redirect") || "/";
+  const isCheckoutRedirect = redirect.includes("checkout");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(loginUser({ email, password }));
+  };
+
+  useEffect(() => {
+    if (user) {
+      if (cart?.products.length > 0 && guestId) {
+        dispatch(mergeCart({ guestId, user })).then(() => {
+          navigate(isCheckoutRedirect ? "/checkout" : "/");
+        });
+      } else {
+        navigate(isCheckoutRedirect ? "/checkout" : "/");
+      }
+    }
+  }, [user, guestId, cart, navigate, isCheckoutRedirect, dispatch]);
   return (
     <div className="flex">
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-8 md:p-12">
@@ -53,7 +79,10 @@ const Login = () => {
           </button>
           <p className="mt-6 text-center text-sm">
             don't have an account ?
-            <Link to="/register" className="text-blue-500">
+            <Link
+              to={`/register?redirect=${encodeURIComponent(redirect)}`}
+              className="text-blue-500"
+            >
               Register
             </Link>
           </p>

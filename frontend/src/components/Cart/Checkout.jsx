@@ -1,32 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { createCheckout } from "../../redux/slices/checkoutSlice";
+import axios from "axios";
 
 const Checkout = () => {
-  const cart = {
-    products: [
-      {
-        name: "Stylish Jacket",
-        size: "M",
-        color: "Black",
-        price: 120,
-        image: "https://picsum.photos/500/500?random=1",
-      },
-      {
-        name: "Casual Sneakers",
-        size: "42",
-        color: "White",
-        price: 75,
-        image: "https://picsum.photos/500/500?random=2",
-      },
-    ],
-    totalPrice: 195,
-  };
-
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  const { cart, loading, error } = useSelector((state) => state.cart);
+  const { user } = useSelector((state) => state.auth);
   const [CheckoutId, setCheckoutId] = useState(null);
 
-  const [shippingAdress, setShippingAdress] = useState({
+  const [shippingAddress, setShippingAddress] = useState({
     firstName: "",
     lastName: "",
     address: "",
@@ -36,14 +22,120 @@ const Checkout = () => {
     phone: "",
   });
 
-  const handleCreateCheckout = (e) => {
+  // ensure cart is Loaded before proceeding
+
+  useEffect(() => {
+    if (!cart || !cart.products || cart.products.length === 0) {
+      navigate("/");
+    }
+  }, [cart, navigate]);
+
+  const handleCreateCheckout = async (e) => {
     e.preventDefault();
-    setCheckoutId(123);
+    if (cart && cart.products.length > 0) {
+      try {
+        // Fetch product details for items missing images
+        const checkoutItemsPromises = cart.products.map(async (product) => {
+          let imageUrl = product.image || product.images?.[0]?.url;
+
+          // If image is missing, fetch product details from backend
+          if (!imageUrl) {
+            try {
+              const response = await axios.get(
+                `http://localhost:9000/api/products/${product.productId}`
+              );
+              imageUrl = response.data.images?.[0]?.url || "";
+            } catch (fetchError) {
+              console.warn(
+                `Failed to fetch image for product ${product.name}:`,
+                fetchError
+              );
+            }
+          }
+
+          return {
+            productId: product.productId,
+            name: product.name || "Unnamed Product",
+            image: imageUrl || "", // Image URL (required by backend)
+            price: Number(product.price) || 0,
+            quantity: product.quantity || 1,
+            size: product.size,
+            color: product.color,
+          };
+        });
+
+        const checkoutItems = await Promise.all(checkoutItemsPromises);
+
+        // Validate that all items have images
+        const missingImages = checkoutItems.filter((item) => !item.image);
+        if (missingImages.length > 0) {
+          console.error("Some products are missing images:", missingImages);
+          alert(
+            "Some products are missing images. Please refresh and try again."
+          );
+          return;
+        }
+
+        console.log("Checkout Items:", checkoutItems); // Debug log
+
+        const res = await dispatch(
+          createCheckout({
+            checkoutItems,
+            shippingAddress,
+            paymentMethod: "OnDelivery",
+            totalPrice: cart.totalPrice,
+          })
+        );
+        if (res.payload && res.payload._id) {
+          setCheckoutId(res.payload._id);
+        }
+      } catch (error) {
+        console.error("Error preparing checkout:", error);
+      }
+    }
   };
 
-  const handPaymentSuccess = () => {
-    navigate("/order-confirmation");
+  const handPaymentSuccess = async () => {
+    try {
+      const response = await axios.put(
+        `http://localhost:9000/api/checkout/${CheckoutId}/pay`,
+        { paymentStatus: "paid" },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        await handleFinalizeCheckout(CheckoutId);
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("Payment failed. Please try again.");
+    }
   };
+
+  const handleFinalizeCheckout = async (CheckoutId) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:9000/api/checkout/${CheckoutId}/finalize`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("userToken")}`,
+          },
+        }
+      );
+      navigate("/order-confirmation");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  if (loading) return <p>Loading cart ...</p>;
+  if (error) return <p> Error : {error}</p>;
+  if (!cart || !cart.products || cart.products.length === 0)
+    return <p>Your Cart is Empty</p>;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto py-10 px-6 tracking-tighter">
       {/* Left Section  */}
@@ -56,7 +148,7 @@ const Checkout = () => {
             <label className="block text-gray-700">Email</label>
             <input
               type="email"
-              value="user@example.com"
+              value={user ? user.email : ""}
               className="w-full p-2 border rounded"
               disabled
             />
@@ -68,11 +160,11 @@ const Checkout = () => {
               <input
                 type="text"
                 className="w-full p-2 border rounded"
-                value={shippingAdress.firstName}
+                value={shippingAddress.firstName}
                 required
                 onChange={(e) =>
-                  setShippingAdress({
-                    ...shippingAdress,
+                  setShippingAddress({
+                    ...shippingAddress,
                     firstName: e.target.value,
                   })
                 }
@@ -83,11 +175,11 @@ const Checkout = () => {
               <input
                 type="text"
                 className="w-full p-2 border rounded"
-                value={shippingAdress.lastName}
+                value={shippingAddress.lastName}
                 required
                 onChange={(e) =>
-                  setShippingAdress({
-                    ...shippingAdress,
+                  setShippingAddress({
+                    ...shippingAddress,
                     lastName: e.target.value,
                   })
                 }
@@ -102,10 +194,10 @@ const Checkout = () => {
 
             <input
               type="text"
-              value={shippingAdress.address}
+              value={shippingAddress.address}
               onChange={(e) =>
-                setShippingAdress({
-                  ...shippingAdress,
+                setShippingAddress({
+                  ...shippingAddress,
                   address: e.target.value,
                 })
               }
@@ -119,11 +211,11 @@ const Checkout = () => {
               <input
                 type="text"
                 className="w-full p-2 border rounded"
-                value={shippingAdress.city}
+                value={shippingAddress.city}
                 required
                 onChange={(e) =>
-                  setShippingAdress({
-                    ...shippingAdress,
+                  setShippingAddress({
+                    ...shippingAddress,
                     city: e.target.value,
                   })
                 }
@@ -134,11 +226,11 @@ const Checkout = () => {
               <input
                 type="text"
                 className="w-full p-2 border rounded"
-                value={shippingAdress.postalCode}
+                value={shippingAddress.postalCode}
                 required
                 onChange={(e) =>
-                  setShippingAdress({
-                    ...shippingAdress,
+                  setShippingAddress({
+                    ...shippingAddress,
                     postalCode: e.target.value,
                   })
                 }
@@ -153,10 +245,10 @@ const Checkout = () => {
 
             <input
               type="text"
-              value={shippingAdress.country}
+              value={shippingAddress.country}
               onChange={(e) =>
-                setShippingAdress({
-                  ...shippingAdress,
+                setShippingAddress({
+                  ...shippingAddress,
                   country: e.target.value,
                 })
               }
@@ -172,10 +264,10 @@ const Checkout = () => {
 
             <input
               type="text"
-              value={shippingAdress.phone}
+              value={shippingAddress.phone}
               onChange={(e) =>
-                setShippingAdress({
-                  ...shippingAdress,
+                setShippingAddress({
+                  ...shippingAddress,
                   phone: e.target.value,
                 })
               }
@@ -193,7 +285,7 @@ const Checkout = () => {
               </button>
             ) : (
               <button
-                onClick={handPaymentSuccess}
+                onClick={() => handPaymentSuccess()}
                 className="w-full bg-black text-white py-3 rounded"
               >
                 Continue to payment
@@ -207,26 +299,35 @@ const Checkout = () => {
         <h3 className="text-lg mb-4">Order Summary</h3>
 
         <div className="border-t py-4 mb-4">
-          {cart.products.map((product, index) => {
+          {cart.products.map((product, index) => (
             <div
               key={index}
               className="flex items-start justify-between py-2 border-b"
             >
               <div className="flex items-start">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-20 h-24 object-cover mr-4"
-                />
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-20 h-24 object-cover mr-4"
+                  />
+                ) : (
+                  <div className="w-20 h-24 bg-gray-200 mr-4 flex items-center justify-center">
+                    <span className="text-xs text-gray-400">No image</span>
+                  </div>
+                )}
                 <div className="">
                   <h3 className="text-md"> {product.name}</h3>
                   <div className="text-gray-500"> Size : {product.size} </div>
                   <div className="text-gray-500"> Color : {product.color} </div>
                 </div>
               </div>
-              <p className="text-xl"> {product.price?.toLocaleString()}</p>
-            </div>;
-          })}
+              <p className="text-xl">
+                {" "}
+                TND{Number(product.price)?.toLocaleString()}
+              </p>
+            </div>
+          ))}
         </div>
         <div className="flex justify-between items-center text-lg mb-4">
           <p>Subtotal</p>

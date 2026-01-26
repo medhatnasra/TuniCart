@@ -8,6 +8,11 @@ const ProductRoutes = require("./routes/productRoutes");
 const CartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
+const SubscribeRoutes = require("./routes/SubscribeRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const productAdminRoutes = require("./routes/productAdminRoutes");
+const orderAdminRoutes = require("./routes/adminOrderRoutes");
 
 app.use(express.json());
 
@@ -30,6 +35,13 @@ app.use("/api/products", ProductRoutes);
 app.use("/api/cart", CartRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/", SubscribeRoutes);
+
+// Admin Routes
+app.use("/api/admin", adminRoutes);
+app.use("/api/admin/products", productAdminRoutes);
+app.use("/api/admin/orders", orderAdminRoutes);
 
 mongoose
   .connect(process.env.MONGO_URL)
