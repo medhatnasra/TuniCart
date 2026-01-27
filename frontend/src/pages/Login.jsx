@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import login from "../assets/login.webp";
+import login from "../assets/login.jpg";
 
 import { loginUser } from "../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -41,7 +41,7 @@ const Login = () => {
           onSubmit={handleSubmit}
         >
           <div className="flex justify-center mb-6 ">
-            <h2 className="text-xl font-medium">EShop</h2>
+            <h2 className="text-xl font-medium">Thermal Care</h2>
           </div>
           <h2 className="text-2xl font-bold text-center mb-6">Hey there!</h2>
           <p className="text-center mb-6">

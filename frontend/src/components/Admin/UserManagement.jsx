@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { addUser, deleteUser, updateUser } from "../../redux/slices/adminSlice";
+import {
+  addUser,
+  deleteUser,
+  updateUser,
+  fetchUsers,
+} from "../../redux/slices/adminSlice";
 
 const UserManagement = () => {
   const dispatch = useDispatch();
@@ -13,8 +18,10 @@ const UserManagement = () => {
   useEffect(() => {
     if (user && user.role !== "admin") {
       navigate("/");
+    } else {
+      dispatch(fetchUsers());
     }
-  }, [user, navigate]);
+  }, [user, navigate, dispatch]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -115,10 +122,10 @@ const UserManagement = () => {
         <table className="min-w-full text-left text-gray-500">
           <thead className="bg-gray-100 text-xs uppercase text-gray-700">
             <tr>
-              <th className="yp-3 px-4"> Name</th>
-              <th className="yp-3 px-4">Email</th>
-              <th className="yp-3 px-4"> Role</th>
-              <th className="yp-3 px-4">Action</th>
+              <th className="py-3 px-4"> Name</th>
+              <th className="py-3 px-4">Email</th>
+              <th className="py-3 px-4"> Role</th>
+              <th className="py-3 px-4">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -137,12 +144,17 @@ const UserManagement = () => {
                       }
                       className="p-2 border rounded"
                     >
-                      <option value="Customer">Customer</option>
-                      <option value="Admin">Admin</option>
+                      <option value="customer">Customer</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </td>
                   <td className="p-4">
-                    <button onClick={() => handleDeleteUser(user._id)}></button>
+                    <button
+                      onClick={() => handleDeleteUser(user._id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))

@@ -25,13 +25,13 @@ export const addUser = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${localStorage.getItem("userToken")}`,
           },
-        }
+        },
       );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
-  }
+  },
 );
 
 // Update User Info
@@ -46,13 +46,13 @@ export const updateUser = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${localStorage.getItem("userToken")}`,
           },
-        }
+        },
       );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
-  }
+  },
 );
 
 // Delete User
@@ -66,13 +66,13 @@ export const deleteUser = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${localStorage.getItem("userToken")}`,
           },
-        }
+        },
       );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
-  }
+  },
 );
 
 const adminSlice = createSlice({
@@ -103,10 +103,10 @@ const adminSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.loading = false;
-        const updatedUser = action.payload;
+        const updatedUser = action.payload.userDetails || action.payload;
 
         const userIndex = state.users.findIndex(
-          (user) => user._id === updateUser._id
+          (user) => user._id === updatedUser._id,
         );
         if (userIndex !== -1) {
           state.users[userIndex] = updatedUser;
@@ -117,7 +117,9 @@ const adminSlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
-        state.users = state.users.filter((user) => user._id !== action.payload);
+        state.users = state.users.filter(
+          (user) => user._id !== action.payload._id,
+        );
       })
       .addCase(addUser.pending, (state) => {
         state.loading = true;
@@ -125,8 +127,9 @@ const adminSlice = createSlice({
       })
       .addCase(addUser.fulfilled, (state, action) => {
         state.loading = false;
-        // Handle both response.user and direct user object
-        const newUser = action.payload.user || action.payload;
+        // Handle backend response with userDetails field
+        const newUser =
+          action.payload.userDetails || action.payload.user || action.payload;
         if (newUser && Array.isArray(state.users)) {
           state.users.push(newUser);
         }

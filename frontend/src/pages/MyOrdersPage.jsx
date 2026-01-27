@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { useNavigate } from "react-router-dom";
@@ -64,10 +64,10 @@ const MyOrdersPage = () => {
                     {new Date(order.createdAt).toLocaleTimeString()}
                   </td>
                   <td className="py-2 px-2 sm:py-4 sm:px-4">
-                    {order.shippingAdress
+                    {order.shippingAddress
                       ? `${
-                          (order.shippingAdress.city,
-                          order.shippingAdress.country)
+                          (order.shippingAddress.city,
+                          order.shippingAddress.country)
                         }`
                       : "N/A"}
                   </td>
@@ -75,7 +75,7 @@ const MyOrdersPage = () => {
                     {order.orderItems.length}
                   </td>
                   <td className="py-2 px-2 sm:py-4 sm:px-4">
-                    {order.totalPrice}
+                    {order.totalPrice} TND
                   </td>
                   <td className="py-2 px-2 sm:py-4 sm:px-4">
                     <span

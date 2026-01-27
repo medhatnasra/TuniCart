@@ -12,10 +12,10 @@ export const fetchAdminProducts = createAsyncThunk(
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
         },
-      }
+      },
     );
     return response.data;
-  }
+  },
 );
 
 export const createProduct = createAsyncThunk(
@@ -28,10 +28,10 @@ export const createProduct = createAsyncThunk(
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
         },
-      }
+      },
     );
     return response.data;
-  }
+  },
 );
 
 // Update an existing product
@@ -46,23 +46,23 @@ export const updateProduct = createAsyncThunk(
         headers: {
           Authorization: `Bearer ${localStorage.getItem("userToken")}`,
         },
-      }
+      },
     );
     return response.data;
-  }
+  },
 );
 
 // Delete Product
 export const deleteProduct = createAsyncThunk(
   "adminProducts/deleteProduct",
   async (id) => {
-    await axios.delete(`http://localhost:9000/api/admin/products/${id}`, {
+    await axios.delete(`http://localhost:9000/api/products/${id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("userToken")}`,
       },
     });
     return id;
-  }
+  },
 );
 
 const adminProductSlice = createSlice({
@@ -91,7 +91,7 @@ const adminProductSlice = createSlice({
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
         const index = state.products.findIndex(
-          (product) => product._id === action.payload._id
+          (product) => product._id === action.payload._id,
         );
         if (index !== -1) {
           state.products[index] = action.payload;
@@ -99,7 +99,7 @@ const adminProductSlice = createSlice({
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.products = state.products.filter(
-          (product) => product._id !== action.payload
+          (product) => product._id !== action.payload,
         );
       });
   },
